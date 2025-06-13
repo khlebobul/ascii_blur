@@ -3,6 +3,7 @@ import '../models/blur_state.dart';
 import '../services/image_service.dart';
 import '../widgets/image_display.dart';
 import '../widgets/blur_controls.dart';
+import 'dart:io';
 
 class ImageBlurScreen extends StatefulWidget {
   const ImageBlurScreen({super.key});
@@ -20,12 +21,16 @@ class _ImageBlurScreenState extends State<ImageBlurScreen> {
     });
   }
 
+  void _onImageSelected(File image) {
+    setState(() {
+      _state = _state.copyWith(image: image, blurValue: 0.0);
+    });
+  }
+
   Future<void> _pickImage() async {
-    final image = await ImageService.pickImage(context);
+    final image = await ImageService.pickImageFromFiles(context);
     if (image != null) {
-      setState(() {
-        _state = _state.copyWith(image: image, blurValue: 0.0);
-      });
+      _onImageSelected(image);
     }
   }
 
@@ -60,6 +65,7 @@ class _ImageBlurScreenState extends State<ImageBlurScreen> {
             child: ImageDisplay(
               image: _state.image,
               blurValue: _state.blurValue,
+              onImageSelected: _onImageSelected,
             ),
           ),
           if (_state.hasImage)

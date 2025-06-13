@@ -1,23 +1,20 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ImageService {
-  static final ImagePicker _picker = ImagePicker();
-
-  static Future<File?> pickImage(BuildContext context) async {
+  static Future<File?> pickImageFromFiles(BuildContext context) async {
     try {
-      final source = await _showSourceDialog(context);
-      if (source == null) return null;
-
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
       );
 
-      return pickedFile != null ? File(pickedFile.path) : null;
+      if (result != null && result.files.single.path != null) {
+        return File(result.files.single.path!);
+      }
+      return null;
     } catch (e) {
       if (context.mounted) {
         _showErrorDialog(context, 'Error loading image: $e');
@@ -26,30 +23,30 @@ class ImageService {
     }
   }
 
-  static Future<ImageSource?> _showSourceDialog(BuildContext context) {
-    return showDialog<ImageSource>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Source'),
-        content: const Text('Where would you like to pick an image from?'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => Navigator.pop(context, ImageSource.gallery),
-            icon: const Icon(Icons.photo_library),
-            label: const Text('Gallery'),
-          ),
-          TextButton.icon(
-            onPressed: () => Navigator.pop(context, ImageSource.camera),
-            icon: const Icon(Icons.camera_alt),
-            label: const Text('Camera'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
+  static Future<File?> handleDroppedFile(dynamic file) async {
+    try {
+      if (kIsWeb) {
+        // For web, handle the file differently
+        if (file.path != null) {
+          return File(file.path);
+        }
+      } else {
+        // For desktop platforms
+        if (file is File) {
+          return file;
+        } else if (file.path != null) {
+          return File(file.path);
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static bool isImageFile(String path) {
+    final extension = path.toLowerCase().split('.').last;
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(extension);
   }
 
   static void _showErrorDialog(BuildContext context, String message) {
