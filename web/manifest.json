@@ -1,6 +1,6 @@
 {
-    "name": "ascii_gradient",
-    "short_name": "ascii_gradient",
+    "name": "ascii_blur",
+    "short_name": "ascii_blur",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

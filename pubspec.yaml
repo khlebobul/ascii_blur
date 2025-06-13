@@ -1,4 +1,4 @@
-name: ascii_gradient
+name: ascii_blur
 description: "A new Flutter project."
 publish_to: 'none'
 version: 0.1.0
@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:
