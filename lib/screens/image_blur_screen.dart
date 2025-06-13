@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../models/blur_state.dart';
 import '../services/image_service.dart';
 import '../widgets/image_display.dart';
@@ -43,23 +44,43 @@ class _ImageBlurScreenState extends State<ImageBlurScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Ascii blur'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.1),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
         actions: [
-          IconButton(
+          _GlassButton(
             onPressed: _pickImage,
-            icon: const Icon(Icons.add_photo_alternate_outlined),
+            icon: Icons.add_photo_alternate_outlined,
             tooltip: 'Add Image',
           ),
+          const SizedBox(width: 8),
           if (_state.hasImage)
-            IconButton(
+            _GlassButton(
               onPressed: _clearImage,
-              icon: const Icon(Icons.clear),
+              icon: Icons.clear,
               tooltip: 'Clear',
             ),
+          const SizedBox(width: 16),
         ],
       ),
-      body: Column(
+      body: Row(
         children: [
           Expanded(
             child: ImageDisplay(
@@ -69,8 +90,108 @@ class _ImageBlurScreenState extends State<ImageBlurScreen> {
             ),
           ),
           if (_state.hasImage)
-            BlurControls(value: _state.blurValue, onChanged: _updateBlurValue),
+            SizedBox(
+              width: 320,
+              height: double.infinity,
+              child: _RightControlPanel(
+                blurValue: _state.blurValue,
+                onBlurChanged: _updateBlurValue,
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _RightControlPanel extends StatelessWidget {
+  final double blurValue;
+  final ValueChanged<double> onBlurChanged;
+
+  const _RightControlPanel({
+    required this.blurValue,
+    required this.onBlurChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 120, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BlurControls(value: blurValue, onChanged: onBlurChanged),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String tooltip;
+
+  const _GlassButton({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 0.5,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onPressed,
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

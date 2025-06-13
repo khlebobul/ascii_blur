@@ -26,39 +26,42 @@ class _ImageDisplayState extends State<ImageDisplay> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(20, 120, 10, 20),
       child: DropTarget(
         onDragDone: (details) => _handleDrop(details),
         onDragEntered: (_) => setState(() => _isDragOver = true),
         onDragExited: (_) => setState(() => _isDragOver = false),
         child: GestureDetector(
           onTap: _handleTap,
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: _isDragOver
-                  ? Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    )
-                  : widget.image == null
-                  ? Border.all(
-                      color: Theme.of(context).colorScheme.outline,
-                      width: 1,
-                      style: BorderStyle.solid,
-                    )
-                  : null,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: widget.image == null
-                  ? _EmptyState(isDragOver: _isDragOver)
-                  : _ImageWithBlur(
-                      image: widget.image!,
-                      blurValue: widget.blurValue,
-                    ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _isDragOver
+                        ? const Color(0xFF6366F1).withValues(alpha: 0.6)
+                        : Colors.white.withValues(alpha: 0.1),
+                    width: _isDragOver ? 2 : 1,
+                  ),
+                  color: widget.image == null
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : Colors.transparent,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: widget.image == null
+                      ? _EmptyState(isDragOver: _isDragOver)
+                      : _ImageWithBlur(
+                          image: widget.image!,
+                          blurValue: widget.blurValue,
+                        ),
+                ),
+              ),
             ),
           ),
         ),
@@ -98,35 +101,64 @@ class _EmptyState extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: isDragOver
-          ? Theme.of(
-              context,
-            ).colorScheme.primaryContainer.withValues(alpha: 0.1)
-          : Colors.transparent,
+      decoration: BoxDecoration(
+        gradient: isDragOver
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF6366F1).withValues(alpha: 0.1),
+                  const Color(0xFF8B5CF6).withValues(alpha: 0.05),
+                ],
+              )
+            : null,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isDragOver
-                ? Icons.file_download
-                : Icons.add_photo_alternate_outlined,
-            size: 64,
-            color: isDragOver
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            isDragOver
-                ? 'Drop image here'
-                : 'Drag & drop an image\nor click to select',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              isDragOver
+                  ? Icons.file_download_outlined
+                  : Icons.add_photo_alternate_outlined,
+              size: 48,
               color: isDragOver
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.6),
             ),
           ),
+          const SizedBox(height: 24),
+          Text(
+            isDragOver ? 'Drop image here' : 'Drag & drop an image',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w300,
+              color: isDragOver
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.9)
+                  : Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (!isDragOver)
+            Text(
+              'or click to select',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w300,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
         ],
       ),
     );
@@ -141,14 +173,34 @@ class _ImageWithBlur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
-      child: Image.file(
-        image,
-        width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.contain,
-      ),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Image.file(image, fit: BoxFit.cover),
+          ),
+        ),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+            ),
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                sigmaX: blurValue,
+                sigmaY: blurValue,
+              ),
+              child: Image.file(
+                image,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
