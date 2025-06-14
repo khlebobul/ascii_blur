@@ -4,11 +4,11 @@ A Flutter project that transforms images into an artistic blend of blur and ASCI
 
 ## Demo
 
-// TODO
+[![Demo](https://github.com/user-attachments/assets/f9929a9a-ddfe-4818-bc14-bb752025214d)](https://github.com/user-attachments/assets/f9929a9a-ddfe-4818-bc14-bb752025214d)
 
-## Inspiration
+## Inspiration ([Codex by OpenAI](https://openai.com/index/introducing-codex/))
 
-// TODO
+<img src="https://github.com/user-attachments/assets/d7fb5667-7295-4905-94f4-049daddaeb19" alt="Codex_Blog_Header_V5" width="500"/>
 
 ## How the ASCII Art Generation Works
 
