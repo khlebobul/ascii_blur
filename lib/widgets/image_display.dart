@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import '../services/image_service.dart';
@@ -22,9 +22,76 @@ class ImageDisplay extends StatefulWidget {
 
 class _ImageDisplayState extends State<ImageDisplay> {
   bool _isDragOver = false;
+  ui.Image? _imageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.image != null) {
+      _loadImageInfo(widget.image!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(ImageDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.image != oldWidget.image) {
+      if (widget.image != null) {
+        _loadImageInfo(widget.image!);
+      } else {
+        setState(() {
+          _imageInfo = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadImageInfo(File imageFile) async {
+    final bytes = await imageFile.readAsBytes();
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    if (!mounted) return;
+    setState(() {
+      _imageInfo = frame.image;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = widget.image != null && _imageInfo != null;
+
+    final imageContainer = ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: _isDragOver
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.1),
+              width: _isDragOver ? 2 : 1,
+            ),
+            color: widget.image == null
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.transparent,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: hasImage
+                ? _ImageWithBlur(
+                    image: widget.image!,
+                    blurValue: widget.blurValue,
+                  )
+                : _EmptyState(isDragOver: _isDragOver),
+          ),
+        ),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 120, 10, 20),
       child: DropTarget(
@@ -33,37 +100,14 @@ class _ImageDisplayState extends State<ImageDisplay> {
         onDragExited: (_) => setState(() => _isDragOver = false),
         child: GestureDetector(
           onTap: _handleTap,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _isDragOver
-                        ? const Color(0xFF6366F1).withValues(alpha: 0.6)
-                        : Colors.white.withValues(alpha: 0.1),
-                    width: _isDragOver ? 2 : 1,
+          child: hasImage
+              ? Center(
+                  child: AspectRatio(
+                    aspectRatio: _imageInfo!.width / _imageInfo!.height,
+                    child: imageContainer,
                   ),
-                  color: widget.image == null
-                      ? Colors.black.withValues(alpha: 0.2)
-                      : Colors.transparent,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: widget.image == null
-                      ? _EmptyState(isDragOver: _isDragOver)
-                      : _ImageWithBlur(
-                          image: widget.image!,
-                          blurValue: widget.blurValue,
-                        ),
-                ),
-              ),
-            ),
-          ),
+                )
+              : imageContainer,
         ),
       ),
     );
@@ -174,10 +218,11 @@ class _ImageWithBlur extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
         Positioned.fill(
           child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            imageFilter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Image.file(image, fit: BoxFit.cover),
           ),
         ),
@@ -187,16 +232,11 @@ class _ImageWithBlur extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.3),
             ),
             child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
+              imageFilter: ui.ImageFilter.blur(
                 sigmaX: blurValue,
                 sigmaY: blurValue,
               ),
-              child: Image.file(
-                image,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.contain,
-              ),
+              child: Image.file(image, fit: BoxFit.cover),
             ),
           ),
         ),
