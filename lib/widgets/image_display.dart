@@ -3,17 +3,20 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import '../services/image_service.dart';
+import 'ascii_overlay.dart';
 
 class ImageDisplay extends StatefulWidget {
   final File? image;
   final double blurValue;
   final ValueChanged<File> onImageSelected;
+  final double asciiThreshold;
 
   const ImageDisplay({
     super.key,
     this.image,
     required this.blurValue,
     required this.onImageSelected,
+    required this.asciiThreshold,
   });
 
   @override
@@ -85,6 +88,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                 ? _ImageWithBlur(
                     image: widget.image!,
                     blurValue: widget.blurValue,
+                    asciiThreshold: widget.asciiThreshold,
                   )
                 : _EmptyState(isDragOver: _isDragOver),
           ),
@@ -212,8 +216,13 @@ class _EmptyState extends StatelessWidget {
 class _ImageWithBlur extends StatelessWidget {
   final File image;
   final double blurValue;
+  final double asciiThreshold;
 
-  const _ImageWithBlur({required this.image, required this.blurValue});
+  const _ImageWithBlur({
+    required this.image,
+    required this.blurValue,
+    required this.asciiThreshold,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +248,9 @@ class _ImageWithBlur extends StatelessWidget {
               child: Image.file(image, fit: BoxFit.cover),
             ),
           ),
+        ),
+        Positioned.fill(
+          child: AsciiOverlay(imageFile: image, threshold: asciiThreshold),
         ),
       ],
     );
